@@ -1,4 +1,15 @@
 <resources>
     <string name="app_name">ClientApp</string>
     <string name="action_settings">Settings</string>
+    <string name="addFriend">addFriend</string>
+    <string name="deleteFriend">deleteFriend</string>
+    <string name="lookup">lookup</string>
+    <string name="name">inputField</string>
+    <string name="displayNameText">TextView</string>
+    <string name="addprofile">addProfile</string>
+    <string name="deleteProfile">deleteProfile</string>
+    <string name="profilephoto">profilePhoto</string>
+    <string name="nameView">nameView</string>
+    <string name="nameListTextView">nameListTextView</string>
+    <string name="profileNameTextView">profileNameTextView</string>
 </resources>

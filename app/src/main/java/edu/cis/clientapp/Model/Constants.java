@@ -1,5 +1,5 @@
 package edu.cis.clientapp.Model;
 
 public class Constants {
-    public static final String HOST = "http://9458b04b.ngrok.io";
+    public static final String HOST = "http://98f41c94.ngrok.io";
 }
