@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.StrictMode;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,12 +25,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import edu.cis.clientapp.Model.CISBookAdapter;
 import edu.cis.clientapp.Model.Constants;
-import edu.cis.clientapp.Model.RAdapter;
 import edu.cis.clientapp.Model.Request;
 import edu.cis.clientapp.Model.Row;
 import edu.cis.clientapp.Model.SimpleClient;
@@ -37,7 +40,6 @@ import edu.cis.clientapp.R;
 
 public class CISbookClientActivity extends AppCompatActivity
 {
-    private static final int GET_FROM_GALLERY = 1;
     /**
      * The address of the server that should be contacted when sending
      * any Requests.
@@ -47,12 +49,15 @@ public class CISbookClientActivity extends AppCompatActivity
     Button deleteProfileButton;
     Button addProfileButton;
     EditText inputNameField;
-    TextView displayNameText;
+    TextView testTextView;
+    RecyclerView recView;
+    CISBookAdapter adapter;
     ArrayList<String> nameList;
     ArrayList<String> statusList;
     ArrayList<Bitmap> imgList;
     ArrayList<Row> rowList;
     Bitmap bitmap;
+
 
 
     @Override
@@ -66,20 +71,27 @@ public class CISbookClientActivity extends AppCompatActivity
         addProfileButton = findViewById(R.id.addProfileButton);
         deleteProfileButton = findViewById(R.id.deleteProfileButton);
         inputNameField = findViewById(R.id.inputNameTextField);
-        displayNameText = findViewById(R.id.displayNameText);
+        testTextView = findViewById(R.id.displayNameText);
+        nameList = new ArrayList<>();
+        statusList = new ArrayList<>();
+        rowList = new ArrayList<>();
+
         /**
          * https://www.androidauthority.com/how-to-use-recycler-views-836053/
          * https://stackoverflow.com/questions/9445661/how-to-get-the-context-from-anywhere
         **/
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.RView);
         nameList = new ArrayList();
         statusList = new ArrayList();
         imgList = new ArrayList();
         rowList = new ArrayList();
 
-        RAdapter radapter = new RAdapter(MyApp.getContext(), rowList);
-        recyclerView.setAdapter(radapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(MyApp.getContext()));
+        recView = findViewById(R.id.recView);
+        adapter = new CISBookAdapter(rowList);
+        recView.setAdapter(adapter);
+        recView.setLayoutManager(new LinearLayoutManager(this));
+
+
+
 
         setSupportActionBar(toolbar);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -104,7 +116,7 @@ public class CISbookClientActivity extends AppCompatActivity
 
     private void setUpButtons()
     {
-        lookupButton.setOnClickListener(new View.OnClickListener() {
+        deleteProfileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
             {
@@ -116,10 +128,10 @@ public class CISbookClientActivity extends AppCompatActivity
         addProfileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //https://stackoverflow.com/questions/9107900/how-to-upload-image-from-gallery-in-android
-                startActivityForResult(new Intent(Intent.ACTION_PICK,
-                                android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI),
-                        GET_FROM_GALLERY);
+//                //https://stackoverflow.com/questions/9107900/how-to-upload-image-from-gallery-in-android
+////                startActivityForResult(new Intent(Intent.ACTION_PICK,
+////                                android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI),
+////                        GET_FROM_GALLERY);
 
                 String userInput = inputNameField.getText().toString();
                 addProf(userInput);
@@ -132,27 +144,25 @@ public class CISbookClientActivity extends AppCompatActivity
         try
         {
             Request ap = new Request("addProfile");
-
             ap.addParam("name", name);
+
             // We are ready to send our request
             String result = SimpleClient.makeRequest(Constants.HOST, ap);
-            displayNameText.setText("added profile: \"" + result + "\" to server.");
+            Row tempRow = new Row();
+            tempRow.setName(name);
+            rowList.add(tempRow);
 
-
-            nameList.add(result);
-            statusList.add("");
-            imgList.add(bitmap);
-            updateRowList();
+//            startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_FROM_GALLERY);
+            
+            adapter.notifyDataSetChanged();
 
             //Toast Code:
-            // https://abhiandroid.com/programming/custom-toast-tutorial-example.html
-            Toast.makeText(MyApp.getContext(),
-                    "profile successfully created",
-                    Toast.LENGTH_LONG).show();
+            // https://developer.android.com/guide/topics/ui/notifiers/toasts
+            Toast.makeText(this, "added profile: \"" + name + "\" to server.", Toast.LENGTH_LONG).show();
         }
         catch (IOException e)
         {
-            Toast.makeText(MyApp.getContext(),
+            Toast.makeText(this,
                     e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
@@ -166,15 +176,18 @@ public class CISbookClientActivity extends AppCompatActivity
             example.addParam("name", name);
             // We are ready to send our request
             String result = SimpleClient.makeRequest(Constants.HOST, example);
-            displayNameText.setText("remove profile: \"" + result + "\" to server.");
-            nameList.add(result);
-            Toast.makeText(MyApp.getContext(),
-                    "profile successfully deleted",
+            for(int e = 0; e <= rowList.size()-1; e++)
+            {
+                if (rowList.get(e).getName().equals(name)) {rowList.remove(e);}
+            }
+
+            Toast.makeText(this,
+                    "removed profile:" + name + " from server.",
                     Toast.LENGTH_LONG).show();
         }
         catch (IOException e)
         {
-            Toast.makeText(MyApp.getContext(),
+            Toast.makeText(this,
                     e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
@@ -191,14 +204,50 @@ public class CISbookClientActivity extends AppCompatActivity
             String result = SimpleClient.makeRequest(Constants.HOST, example);
             System.out.println("ping!");
             System.out.println(("result is: " + result));
-            displayNameText.setText("result is: " + result);
+            testTextView.setText("result is: " + result);
         } catch (IOException e)
         {
             System.out.println(e.getMessage());
         }
     }
 
+    public void addImage(String name, String image)
+    {
+        try
+        {
+            Request example = new Request("setImage");
+            example.addParam("name", name);
+            example.addParam("imageString", image);
+            String result = SimpleClient.makeRequest(Constants.HOST, example);
+        } catch (IOException e)
+        {
+            System.out.println(e.getMessage());
+        }
+    }
 
+    public void getImage(String user)
+    {
+//        get the string back via request
+    }
+
+//    public Bitmap getBitmap()
+//    {
+//        //get image uri
+//        //check if image uri is not null
+//        //try: get bitmap
+//        //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageURI);
+//        //                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//        //                    //Quality of image has to be reduced otherwise it causes the application to crash
+//        //                    bitmap.compress(Bitmap.CompressFormat.JPEG, 6, outputStream);
+//        //                    byte[] byteArray = outputStream.toByteArray();
+////        String encodedString = Base64.encodeToString(byteArray, Base64.DEFAULT);
+////                    addImage(encodedString);
+//
+//
+////        ASK ABOUT THIS v
+////        byte[] decodedString = Base64.decode(result, Base64.DEFAULT);
+//            imageView.setImageBitmap(BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length));
+//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
@@ -225,33 +274,47 @@ public class CISbookClientActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    public void updateRowList() {
-        rowList.removeAll(rowList);
-        for(int i = 0; i< nameList.size(); i++){
-            Row row = new Row();
-            row.setName(nameList.get(i));
-            row.setStatus(statusList.get(i));
-            rowList.add(row);
+    private String updatedText() {
+        String nameListText = "";
+        for (Row row : rowList)
+        {
+//            nameListText = nameListText + "Name: " + row.getName() + ", ";
+            nameListText = nameListText + row.getName() + ", \n";
+//            nameListText = nameListText + "Status: " + row.getStatus() + "\n";
         }
+        return nameListText;
     }
 
     @Override
     //https://stackoverflow.com/questions/9107900/how-to-upload-image-from-gallery-in-android
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
         super.onActivityResult(requestCode, resultCode, data);
 
-
         //Detects request codes
-        if(requestCode==GET_FROM_GALLERY && resultCode == Activity.RESULT_OK) {
-            Uri selectedImage = data.getData();
+        if(requestCode == Constants.GET_FROM_GALLERY && resultCode == Activity.RESULT_OK)
+        {
+
             bitmap = null;
-            try {
+            Uri selectedImage = data.getData();
+
+            try
+            {
                 bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
+                String path = MediaStore.Images.Media.RELATIVE_PATH;
+                File f = new File(path);
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 6, outputStream);
+                byte[] byteArray = outputStream.toByteArray();
+                String encodedString = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                //TODO: FIX THIS
+                addImage("",encodedString);
+
+            } catch (FileNotFoundException e)
+            {
                 e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
+            } catch (IOException e)
+            {
                 e.printStackTrace();
             }
         }

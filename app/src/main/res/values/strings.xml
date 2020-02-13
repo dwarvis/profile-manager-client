@@ -10,6 +10,10 @@
     <string name="deleteProfile">deleteProfile</string>
     <string name="profilephoto">profilePhoto</string>
     <string name="nameView">nameView</string>
-    <string name="nameListTextView">nameListTextView</string>
     <string name="profileNameTextView">profileNameTextView</string>
+    <string name="statusTextView">statusTextView</string>
+    <string name="testImageView">testImageView</string>
+    <string name="nameListTextView">nameListTextView</string>
+    <string name="nameText">nameText</string>
+    <string name="profile_picture">profile picture</string>
 </resources>
