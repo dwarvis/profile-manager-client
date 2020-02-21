@@ -3,6 +3,7 @@ package edu.cis.clientapp.Controller;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -148,12 +149,20 @@ public class CISbookClientActivity extends AppCompatActivity
 
             // We are ready to send our request
             String result = SimpleClient.makeRequest(Constants.HOST, ap);
+
+            //make a new row and add it to data
             Row tempRow = new Row();
+            //set image
+            startActivityForResult(new Intent(Intent.ACTION_PICK,
+                    android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI),
+                    Constants.GET_FROM_GALLERY);
+            Bitmap image = getImage(name);
+            //set name
+            tempRow.setImage(image);
             tempRow.setName(name);
             rowList.add(tempRow);
 
-//            startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_FROM_GALLERY);
-            
+
             adapter.notifyDataSetChanged();
 
             //Toast Code:
@@ -219,35 +228,41 @@ public class CISbookClientActivity extends AppCompatActivity
             example.addParam("name", name);
             example.addParam("imageString", image);
             String result = SimpleClient.makeRequest(Constants.HOST, example);
+            Toast.makeText(this, "Image adding: " + result, Toast.LENGTH_LONG).show();
         } catch (IOException e)
         {
             System.out.println(e.getMessage());
         }
     }
 
-    public void getImage(String user)
+    public Bitmap getImage(String name)
     {
 //        get the string back via request
+        try
+        {
+            Request example = new Request("getImage");
+            example.addParam("name", name);
+            String result = SimpleClient.makeRequest(Constants.HOST, example);
+            Bitmap bitmap = StringToBitMap(result);
+            return bitmap;
+        } catch (IOException e)
+        {
+            e.getMessage();
+            return null;
+        }
     }
 
-//    public Bitmap getBitmap()
-//    {
-//        //get image uri
-//        //check if image uri is not null
-//        //try: get bitmap
-//        //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageURI);
-//        //                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-//        //                    //Quality of image has to be reduced otherwise it causes the application to crash
-//        //                    bitmap.compress(Bitmap.CompressFormat.JPEG, 6, outputStream);
-//        //                    byte[] byteArray = outputStream.toByteArray();
-////        String encodedString = Base64.encodeToString(byteArray, Base64.DEFAULT);
-////                    addImage(encodedString);
-//
-//
-////        ASK ABOUT THIS v
-////        byte[] decodedString = Base64.decode(result, Base64.DEFAULT);
-//            imageView.setImageBitmap(BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length));
-//    }
+    //https://stackoverflow.com/questions/13562429/how-many-ways-to-convert-bitmap-to-string-and-vice-versa
+    public Bitmap StringToBitMap(String encodedString){
+        try {
+            byte [] encodeByte=Base64.decode(encodedString,Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+            return bitmap;
+        } catch(Exception e) {
+            e.getMessage();
+            return null;
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
@@ -300,9 +315,13 @@ public class CISbookClientActivity extends AppCompatActivity
 
             try
             {
+                //get bitmap from gallery image
                 bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
+                //get path of gallery image
                 String path = MediaStore.Images.Media.RELATIVE_PATH;
+                //get the file at that path
                 File f = new File(path);
+                //compress the image because its too big
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 6, outputStream);
                 byte[] byteArray = outputStream.toByteArray();
