@@ -150,18 +150,17 @@ public class CISbookClientActivity extends AppCompatActivity
             // We are ready to send our request
             String result = SimpleClient.makeRequest(Constants.HOST, ap);
 
-            //make a new row and add it to data
-            Row tempRow = new Row();
             //set image
             startActivityForResult(new Intent(Intent.ACTION_PICK,
                     android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI),
                     Constants.GET_FROM_GALLERY);
             Bitmap image = getImage(name);
-            //set name
+            //make a new row and add it to data
+            //set name and image
+            Row tempRow = new Row();
             tempRow.setImage(image);
             tempRow.setName(name);
             rowList.add(tempRow);
-
 
             adapter.notifyDataSetChanged();
 
@@ -289,17 +288,6 @@ public class CISbookClientActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private String updatedText() {
-        String nameListText = "";
-        for (Row row : rowList)
-        {
-//            nameListText = nameListText + "Name: " + row.getName() + ", ";
-            nameListText = nameListText + row.getName() + ", \n";
-//            nameListText = nameListText + "Status: " + row.getStatus() + "\n";
-        }
-        return nameListText;
-    }
-
     @Override
     //https://stackoverflow.com/questions/9107900/how-to-upload-image-from-gallery-in-android
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
@@ -327,7 +315,8 @@ public class CISbookClientActivity extends AppCompatActivity
                 byte[] byteArray = outputStream.toByteArray();
                 String encodedString = Base64.encodeToString(byteArray, Base64.DEFAULT);
                 //TODO: FIX THIS
-                addImage("",encodedString);
+                String name = inputNameField.getText().toString();
+                addImage(name, encodedString);
 
             } catch (FileNotFoundException e)
             {
