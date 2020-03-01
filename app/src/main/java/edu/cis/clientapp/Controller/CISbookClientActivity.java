@@ -154,15 +154,9 @@ public class CISbookClientActivity extends AppCompatActivity
             startActivityForResult(new Intent(Intent.ACTION_PICK,
                     android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI),
                     Constants.GET_FROM_GALLERY);
-            Bitmap image = getImage(name);
-            //make a new row and add it to data
-            //set name and image
-            Row tempRow = new Row();
-            tempRow.setImage(image);
-            tempRow.setName(name);
-            rowList.add(tempRow);
 
             adapter.notifyDataSetChanged();
+
 
             //Toast Code:
             // https://developer.android.com/guide/topics/ui/notifiers/toasts
@@ -188,6 +182,8 @@ public class CISbookClientActivity extends AppCompatActivity
             {
                 if (rowList.get(e).getName().equals(name)) {rowList.remove(e);}
             }
+
+            adapter.notifyDataSetChanged();
 
             Toast.makeText(this,
                     "removed profile:" + name + " from server.",
@@ -234,19 +230,21 @@ public class CISbookClientActivity extends AppCompatActivity
         }
     }
 
-    public Bitmap getImage(String name)
+    public String getImage(String name)
     {
 //        get the string back via request
         try
         {
+
             Request example = new Request("getImage");
             example.addParam("name", name);
+            System.out.println("THIS IS A MESSAGE WHEN IT STARTS");
             String result = SimpleClient.makeRequest(Constants.HOST, example);
-            Bitmap bitmap = StringToBitMap(result);
-            return bitmap;
+            System.out.println("THIS IS A MESSAGE WHEN IT WORKS" + result);
+            return result;
         } catch (IOException e)
         {
-            e.getMessage();
+            System.out.println(e.getMessage());
             return null;
         }
     }
@@ -254,7 +252,7 @@ public class CISbookClientActivity extends AppCompatActivity
     //https://stackoverflow.com/questions/13562429/how-many-ways-to-convert-bitmap-to-string-and-vice-versa
     public Bitmap StringToBitMap(String encodedString){
         try {
-            byte [] encodeByte=Base64.decode(encodedString,Base64.DEFAULT);
+            byte [] encodeByte = Base64.decode(encodedString,Base64.DEFAULT);
             Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
             return bitmap;
         } catch(Exception e) {
@@ -305,18 +303,38 @@ public class CISbookClientActivity extends AppCompatActivity
             {
                 //get bitmap from gallery image
                 bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
+
                 //get path of gallery image
                 String path = MediaStore.Images.Media.RELATIVE_PATH;
+
                 //get the file at that path
                 File f = new File(path);
+
                 //compress the image because its too big
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 6, outputStream);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 1, outputStream);
                 byte[] byteArray = outputStream.toByteArray();
                 String encodedString = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                //TODO: FIX THIS
+
+                //get the name and send to server
                 String name = inputNameField.getText().toString();
                 addImage(name, encodedString);
+
+                //ew
+                String temp = getImage(name);
+                System.out.println(temp);
+                Bitmap image = StringToBitMap(temp);
+                System.out.println("DID IT WORK");
+                //make a new row and add it to data
+                //set name and image
+                Row tempRow = new Row();
+
+                tempRow.setImage(image);
+                tempRow.setName(name);
+                rowList.add(tempRow);
+
+                //update adapter
+                adapter.notifyDataSetChanged();
 
             } catch (FileNotFoundException e)
             {

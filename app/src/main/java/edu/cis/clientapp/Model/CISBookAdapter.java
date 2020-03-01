@@ -44,7 +44,7 @@ public class CISBookAdapter extends RecyclerView.Adapter<CISBookViewHolder>
         holder.nameText.setText(mData.get(position).getName());
 //        holder.statusText.setText(mData.get(position).getName());
         holder.statusText.setText("bruh");
-//        holder.image.setImageBitmap(mData.get(position).getImage());
+        holder.image.setImageBitmap(mData.get(position).getImage());
     }
 
     @Override
